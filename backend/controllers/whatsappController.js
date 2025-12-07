@@ -1,5 +1,5 @@
 const WhatsAppService = require('../services/whatsappService');
-const { generateOpenAIResponse } = require('../services/openaiService');
+const { generateRecommendation } = require('../services/openaiService');
 const { normalizePhoneNumber, generateSessionId, isValidWhatsAppNumber } = require('../utils/phoneNumberValidator');
 const { createHelpMessage, createErrorMessage, extractKeywords, calculateTypingDelay } = require('../utils/whatsappFormatter');
 
@@ -98,12 +98,13 @@ class WhatsAppController {
       
       // Get or create conversation session
       let conversationHistory = sessions.get(sessionId) || [];
-      const products = require('../../data/products.json') || []; // Fallback to products data
+      // Get products from server instance (loaded from CSV)
+      const products = global.app?.locals?.products || [];
 
-      // Handle special commands
+      // Handle special commands - only respond to explicit help requests
       const lowerMessage = messageBody.toLowerCase().trim();
       
-      if (this.isHelpCommand(lowerMessage)) {
+      if (this.isExplicitHelpCommand(lowerMessage)) {
         const helpMessage = createHelpMessage();
         await this.sendResponse(phoneNumber, helpMessage);
         return;
@@ -142,10 +143,10 @@ class WhatsAppController {
       await new Promise(resolve => setTimeout(resolve, Math.min(typingDelay, 3000)));
 
       // Generate AI response
-      const aiResponse = await generateOpenAIResponse(
+      const aiResponse = await generateRecommendation(
         messageBody, 
-        conversationHistory, 
-        products
+        products,
+        conversationHistory
       );
 
       if (aiResponse) {
@@ -159,8 +160,8 @@ class WhatsAppController {
         // Update session
         sessions.set(sessionId, conversationHistory);
 
-        // Send formatted response
-        await this.sendResponse(phoneNumber, aiResponse);
+        // Send formatted response with images
+        await this.sendResponseWithImages(phoneNumber, aiResponse);
 
         console.log(`Response sent to ${phoneNumber}`);
       } else {
@@ -248,6 +249,55 @@ class WhatsAppController {
     } catch (error) {
       console.error(`Error sending response to ${phoneNumber}:`, error);
       throw error;
+    }
+  }
+
+  /**
+   * Send response with images extracted and sent as media
+   */
+  async sendResponseWithImages(phoneNumber, message) {
+    try {
+      // Extract image URLs from the message
+      const imageRegex = /📸\s*(https?:\/\/[^\s]+)/g;
+      const imageUrls = [];
+      let match;
+      
+      while ((match = imageRegex.exec(message)) !== null) {
+        imageUrls.push(match[1]);
+      }
+
+      // Remove image URLs from text message to avoid duplicate
+      const textMessage = message.replace(/📸\s*https?:\/\/[^\s]+/g, '📸 [Image sent below]');
+
+      // Send the text message first
+      await this.sendResponse(phoneNumber, textMessage);
+
+      // Send each image as a separate media message
+      for (const imageUrl of imageUrls) {
+        try {
+          await new Promise(resolve => setTimeout(resolve, 1500)); // Delay between messages
+          const response = await this.whatsappService.sendMediaMessage(phoneNumber, imageUrl, '🛍️ Product Image');
+          
+          if (response && response.sid) {
+            messageStatus.set(response.sid, {
+              phoneNumber,
+              status: 'sent',
+              timestamp: new Date(),
+              type: 'image'
+            });
+          }
+          
+          console.log(`Image sent to ${phoneNumber}: ${imageUrl}`);
+        } catch (imageError) {
+          console.error(`Failed to send image ${imageUrl} to ${phoneNumber}:`, imageError);
+          // Continue with other images even if one fails
+        }
+      }
+
+    } catch (error) {
+      console.error(`Error sending response with images to ${phoneNumber}:`, error);
+      // Fallback to regular text message
+      await this.sendResponse(phoneNumber, message);
     }
   }
 
@@ -354,9 +404,21 @@ class WhatsAppController {
   /**
    * Helper methods
    */
-  isHelpCommand(message) {
-    const helpKeywords = ['help', '?', 'how', 'what can you do', 'commands', 'info'];
-    return helpKeywords.some(keyword => message.includes(keyword));
+  isExplicitHelpCommand(message) {
+    // Only trigger on very specific help requests
+    const exactHelpCommands = [
+      'help', 
+      '?', 
+      'what can you do', 
+      'commands', 
+      'how do i use this', 
+      'how does this work',
+      'what are the commands'
+    ];
+    
+    return exactHelpCommands.some(command => 
+      message === command || message.startsWith(command + ' ')
+    );
   }
 
   isStartOverCommand(message) {

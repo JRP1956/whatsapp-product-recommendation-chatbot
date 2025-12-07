@@ -50,6 +50,8 @@ app.get('/api/health', (req, res) => {
 // Start server
 const startServer = async () => {
   await loadProducts();
+  // Make app available globally for controllers
+  global.app = app;
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });

@@ -45,6 +45,11 @@ class WhatsAppService {
    */
   async sendMediaMessage(to, mediaUrl, caption = '') {
     try {
+      if (!this.client) {
+        console.log(`📱 [DEMO MODE] Would send image to ${to}: ${mediaUrl} with caption: ${caption}`);
+        return { sid: 'demo_media_' + Date.now(), status: 'sent' };
+      }
+
       const response = await this.client.messages.create({
         from: this.fromNumber,
         to: `whatsapp:${to}`,
