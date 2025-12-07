@@ -1,16 +1,17 @@
-# AI Product Recommendation WhatsApp Bot - MVP
+# EVOLOVE WhatsApp Sleepwear Stylist Bot
 
-An intelligent WhatsApp chatbot that recommends products based on user queries using OpenAI API and Twilio's WhatsApp Business API.
+An intelligent WhatsApp chatbot that acts as a personal sleepwear stylist for EVOLOVE, recommending comfortable nightwear and loungewear products using OpenAI API and Twilio's WhatsApp Business API.
 
 ## Features
 
 - 📱 **WhatsApp Integration**: Native WhatsApp messaging experience
-- 🤖 **AI-Powered Recommendations**: Context-aware responses using OpenAI GPT-3.5-turbo
-- 📦 **Product Catalog**: Searchable database of tech products loaded from CSV
-- 💬 **Natural Language Processing**: Understands conversational queries
+- 🤖 **AI-Powered Personal Stylist**: Conversational recommendations using OpenAI GPT-3.5-turbo
+- 📦 **Product Catalog**: Curated database of sleepwear & loungewear loaded from CSV
+- 💬 **Natural Language Processing**: Understands conversational queries about comfort, style, and preferences
+- 📸 **Image Support**: Sends product images directly in WhatsApp messages
 - 📊 **Message Status Tracking**: Delivery, read receipts, and typing indicators
 - 🔄 **Session Management**: Phone number-based conversation continuity
-- 📱 **Mobile-Optimized**: WhatsApp-specific formatting and emojis
+- 📱 **Mobile-Optimized**: WhatsApp-specific formatting with emojis
 - ⚡ **Real-time Processing**: Instant responses via webhooks
 
 ## Technology Stack
@@ -26,10 +27,12 @@ An intelligent WhatsApp chatbot that recommends products based on user queries u
 ### WhatsApp Features
 - Message delivery status tracking
 - Typing indicators (simulated)
-- Media message handling
+- Media message handling (product images)
+- Automatic image extraction and sending from AI responses
 - Message chunking for long responses
 - WhatsApp-specific formatting (emojis, markdown)
 - Phone number validation and normalization
+- Smart help command detection (avoids false triggers)
 
 ## Quick Setup Instructions
 
@@ -86,24 +89,27 @@ npm run dev
 2. **Start Chatting**: Send any message to begin the conversation
 3. **Get Recommendations**: Ask for products using natural language:
    ```
-   "I need a good wireless mouse"
-   "Show me headphones under $100" 
-   "What's good for gaming?"
-   "Help me find work-from-home accessories"
+   "I need comfortable sleepwear"
+   "Show me cotton nighties"
+   "What's good for hot summer nights?"
+   "I want loungewear for work from home"
+   "Do you have pajama sets in XL?"
    ```
 4. **Special Commands**:
    - `help` - Show available commands
    - `start over` - Reset conversation history
-5. **Media Support**: Send images with captions for context
+5. **Product Images**: The bot automatically sends product images from the catalog
 6. **Continuous Chat**: Your conversation history is maintained per phone number
+7. **Personal Styling**: The AI acts as your personal sleepwear stylist with friendly recommendations
 
 ## Sample WhatsApp Queries
 
-- 💬 "I need headphones for music production"
-- 💰 "Show me tech accessories under $50"
-- 🎁 "What's a good gift for a programmer?"
-- 💻 "I want something portable for my laptop"
-- ⭐ "Best rated electronics in your catalog"
+- 🌙 "I need something comfortable for sleeping"
+- 💰 "Show me nightwear under ₹1000"
+- 🎁 "What's a good gift for my sister?"
+- ☀️ "I want something light for summer"
+- ⭐ "What's your most popular nightgown?"
+- 👗 "Do you have plus-size loungewear?"
 - ❓ "Help" (for command list)
 
 ## API Endpoints
@@ -128,22 +134,36 @@ npm run dev
 
 ## Product Catalog
 
-The app includes 15 sample products across categories:
-- **Electronics**: Mice, keyboards, webcams, chargers, smartwatch
-- **Audio**: Earbuds, speakers, headphones
-- **Accessories**: Stands, hubs, organizers, screen protectors
+The app includes EVOLOVE's sleepwear and loungewear collection:
+- **Nightwear**: Cotton nighties, nightgowns, night dresses
+- **Loungewear**: Pajama sets, shorts sets, lounge sets
+- **Sleepwear**: Sleep dresses, sleep shirts
+- **Sizes**: S to 4XL available
+- **Features**: Product images, direct purchase links, detailed descriptions
+
+Each product includes:
+- Product name, category, and brand
+- Price in INR (₹)
+- Size and color options
+- High-quality product images
+- Direct links to EVOLOVE store
+- Detailed descriptions and features
 
 ## Customization
 
 ### Adding Products
 Edit `backend/data/products.csv` with your product data:
 ```csv
-product_id,name,category,price,description,features,brand,rating
-P016,New Product,Category,29.99,Description here,Feature1|Feature2,Brand,4.5
+product_id,name,category,price,original_price,description,brand,image,link,size,color,rating
+P016,Cotton Night Dress,Nightwear,899,1299,Comfortable cotton night dress,EVOLOVE,https://...,L,Blue,4.5
 ```
 
 ### Modifying AI Behavior
-Edit the system prompt in `backend/services/openaiService.js` to change how the AI responds.
+Edit the system prompt in `backend/services/openaiService.js` to:
+- Change the chatbot's personality and tone
+- Adjust product recommendation style
+- Modify response formatting
+- Update conversation starters and questions
 
 ## Troubleshooting
 
@@ -183,9 +203,10 @@ Edit the system prompt in `backend/services/openaiService.js` to change how the 
 
 ## Cost Estimation
 
-- **OpenAI API**: ~$0.002 per conversation (GPT-3.5-turbo)
-- **Hosting**: Free tier available (Railway + Vercel)
-- **Estimated monthly cost for 1000 users**: $10-20
+- **OpenAI API**: ~$0.002-0.004 per conversation (GPT-3.5-turbo)
+- **Twilio WhatsApp**: Free sandbox for development, production pricing varies by region
+- **Hosting**: Free tier available (Railway, Render, Heroku)
+- **Estimated monthly cost for 1000 active conversations**: $15-30
 
 ## Next Steps for Production
 
@@ -203,11 +224,13 @@ Edit the system prompt in `backend/services/openaiService.js` to change how the 
 
 ### Features
 1. **Product Management**: Admin panel for managing product catalog
-2. **Advanced AI**: Implement conversation memory and user preferences
-3. **Media Support**: Handle product images and voice messages
-4. **Multi-language**: Add support for multiple languages
-5. **Order Integration**: Connect with e-commerce platforms
-6. **Customer Support**: Escalation to human agents
+2. **Advanced AI**: User preferences learning and personalized recommendations
+3. **Enhanced Media Support**: Voice messages and customer photo uploads for sizing help
+4. **Multi-language**: Support for Hindi, regional languages
+5. **E-commerce Integration**: Direct checkout and order tracking via WhatsApp
+6. **Size Recommendations**: AI-powered size suggestions based on customer inputs
+7. **Customer Support**: Escalation to human agents for complex queries
+8. **Analytics Dashboard**: Track popular products, conversion rates, and customer satisfaction
 
 ## License
 
